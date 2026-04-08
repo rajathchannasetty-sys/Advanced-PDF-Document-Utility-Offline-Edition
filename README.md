@@ -35,7 +35,7 @@
 
 ## 🚀 How to Use
 
-1. Open the [live site](https://YOUR-USERNAME.github.io/pdf-toolkit/) in any modern browser
+1. Open the [live site](https://github.com/rajathchannasetty-sys/Advanced-PDF-Document-Utility-Offline-Edition) in any modern browser
 2. Drag & drop your files or click **Browse**
 3. Choose an operation from the cards
 4. Download your result — done!
@@ -133,7 +133,7 @@ Please read [SECURITY.md](SECURITY.md) before reporting vulnerabilities.
 
 **Rajath Channasetty**
 - LinkedIn: [@rajath-channasetty](https://linkedin.com/in/rajath-channasetty)
-- GitHub: [@YOUR-USERNAME](https://github.com/YOUR-USERNAME)
+- GitHub: [@YOUR-USERNAME](https://github.com/rajathchannasetty-sys)
 
 ---
 
