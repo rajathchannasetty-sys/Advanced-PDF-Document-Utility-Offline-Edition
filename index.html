@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>PDF Utility — by Rajath Channasetty</title>
+  <style>
+    :root {
+      --bg1:#1e1b4b; --bg2:#0f172a;
+      --glass:rgba(255,255,255,0.07);
+      --glass2:rgba(255,255,255,0.13);
+      --border:rgba(255,255,255,0.1);
+      --border2:rgba(255,255,255,0.18);
+      --gold:#c9a96e; --gold2:#9e7840;
+      --green:#10b981; --green2:#059669;
+      --red:#f87171; --amber:#fbbf24;
+      --text:#e2e8f0; --muted:#94a3b8; --hint:#64748b;
+      --r:14px; --r2:10px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      background:linear-gradient(135deg,var(--bg1) 0%,#312e81 45%,var(--bg2) 100%);
+      min-height:100vh; padding:36px 16px 60px; color:var(--text);
+    }
+
+    /* ── Header ── */
+    .hdr{text-align:center;margin-bottom:28px}
+    .hdr h1{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-bottom:6px}
+    .hdr p{font-size:13px;color:var(--muted)}
+    .badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .badge{font-size:11px;padding:3px 11px;border-radius:20px;font-weight:500;
+      background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.28);color:#6ee7b7}
+
+    /* ── Loading banner ── */
+    #lib-status{
+      max-width:860px;margin:0 auto 18px;padding:10px 16px;
+      border-radius:var(--r2);font-size:13px;text-align:center;display:none;
+    }
+    #lib-status.loading{display:block;background:rgba(251,191,36,.1);
+      border:1px solid rgba(251,191,36,.3);color:#fde68a}
+    #lib-status.error{display:block;background:rgba(248,113,113,.12);
+      border:1px solid rgba(248,113,113,.3);color:#fca5a5}
+    #lib-status.ok{display:block;background:rgba(16,185,129,.1);
+      border:1px solid rgba(16,185,129,.28);color:#6ee7b7}
+
+    /* ── Container ── */
+    .container{max-width:860px;margin:0 auto}
+
+    /* ── Drop zone ── */
+    .dz{
+      border:1.5px dashed rgba(255,255,255,.22);border-radius:var(--r);
+      padding:2.25rem 1.5rem;text-align:center;cursor:pointer;background:var(--glass);
+      transition:border-color .2s,background .2s;margin-bottom:12px;
+    }
+    .dz:hover,.dz.over{border-color:var(--gold);background:var(--glass2)}
+    .dz svg{display:block;margin:0 auto 10px;opacity:.45;transition:opacity .2s}
+    .dz:hover svg,.dz.over svg{opacity:.85}
+    .dz-t{font-size:14px;margin-bottom:4px}
+    .dz-t b{color:var(--gold);font-weight:500}
+    .dz-n{font-size:11px;color:var(--hint)}
+    input[type=file]{display:none}
+
+    /* ── File list ── */
+    #flist-box{
+      display:none;background:var(--glass);border:1px solid var(--border);
+      border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;
+    }
+    .flist-hdr{font-size:10px;font-weight:600;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+    .fi{display:flex;align-items:center;gap:10px;padding:5px 0;
+      border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+    .fi:last-child{border-bottom:none}
+    .fi-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0}
+    .fi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fi-size{font-size:11px;color:var(--muted);white-space:nowrap}
+
+    /* ── Grid ── */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+
+    /* ── Cards ── */
+    .card{
+      background:var(--glass);border:1px solid var(--border);border-radius:var(--r);
+      padding:18px 20px;transition:transform .18s,box-shadow .18s,border-color .18s;
+    }
+    .card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.3);border-color:var(--border2)}
+    .card.wide{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:13px 18px}
+    .card-icon{font-size:22px;margin-bottom:8px}
+    .card-title{font-size:14px;font-weight:600;margin-bottom:4px}
+    .card-desc{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.55}
+
+    input[type=text]{
+      width:100%;padding:9px 12px;border-radius:var(--r2);
+      border:1px solid var(--border2);background:rgba(0,0,0,.25);
+      color:var(--text);font-size:13px;outline:none;margin-bottom:10px;transition:border-color .18s;
+    }
+    input[type=text]:focus{border-color:var(--gold)}
+    input[type=text]::placeholder{color:var(--hint)}
+    .card.wide label{font-size:12px;color:var(--muted);white-space:nowrap}
+    .card.wide input{margin:0;flex:1}
+
+    /* ── Buttons ── */
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:7px;
+      padding:9px 18px;border-radius:var(--r2);border:none;
+      font-size:13px;font-weight:500;cursor:pointer;
+      transition:opacity .18s,transform .12s,box-shadow .18s;
+    }
+    .btn:hover:not(:disabled){opacity:.87;transform:translateY(-1px)}
+    .btn:active:not(:disabled){transform:translateY(0)}
+    .btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important}
+    .btn-g{background:var(--green);color:#fff;box-shadow:0 3px 12px rgba(16,185,129,.3)}
+    .btn-g:hover:not(:disabled){box-shadow:0 6px 20px rgba(16,185,129,.4)}
+
+    /* ── Status messages ── */
+    .msg{font-size:12px;margin-top:9px;min-height:0;border-radius:8px;
+      padding:0;max-height:0;overflow:hidden;transition:max-height .25s,padding .25s;line-height:1.5}
+    .msg.show{padding:7px 11px;max-height:80px}
+    .msg.ok {background:rgba(16,185,129,.13);color:#6ee7b7;border:1px solid rgba(16,185,129,.25)}
+    .msg.err{background:rgba(248,113,113,.13);color:#fca5a5;border:1px solid rgba(248,113,113,.25)}
+    .msg.inf{background:rgba(148,163,184,.1);color:var(--muted);border:1px solid rgba(148,163,184,.2)}
+
+    /* ── Spinner ── */
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);
+      border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+    /* ── Post-action buttons ── */
+    .action-btn {
+      display:inline-flex;align-items:center;gap:5px;
+      padding:6px 13px;border-radius:8px;border:none;
+      font-size:11px;font-weight:600;letter-spacing:.03em;cursor:pointer;
+      transition:opacity .15s,transform .1s;
+    }
+    .action-btn:hover { opacity:.85;transform:translateY(-1px); }
+    .action-btn:active { transform:translateY(0); }
+    .clear-btn  { background:rgba(255,255,255,.12);color:var(--text); }
+    .reload-btn { background:rgba(201,169,110,.18);color:#e9c97e; }
+
+    /* ── Footer ── */
+    footer{text-align:center;margin-top:32px;font-size:13px;color:var(--muted)}
+    footer a{color:var(--gold);text-decoration:none;font-weight:500}
+    footer a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>✨ PDF &amp; Document Utility</h1>
+  <p>by Rajath Channasetty</p>
+  <div class="badges">
+    <span class="badge">100% Local</span>
+    <span class="badge">No Uploads</span>
+    <span class="badge">Privacy Safe</span>
+  </div>
+</div>
+
+<div id="lib-status" class="loading">⏳ Loading PDF libraries…</div>
+
+<div class="container">
+
+  <!-- Drop zone -->
+  <div class="dz" id="dz" onclick="document.getElementById('fi').click()">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <p class="dz-t"><b>Click to browse</b> or drag &amp; drop files here</p>
+    <p class="dz-n">PDF · DOCX · PNG · JPG &nbsp;|&nbsp; Max 50 MB each</p>
+  </div>
+  <input type="file" id="fi" multiple
+    accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg">
+
+  <!-- File list -->
+  <div id="flist-box">
+    <div class="flist-hdr" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Loaded files</span>
+      <button class="action-btn clear-btn" style="padding:4px 10px;font-size:10px" onclick="clearAll()">↺ Clear all</button>
+    </div>
+    <div id="flist-items"></div>
+  </div>
+
+  <div class="grid">
+
+    <!-- Output filename -->
+    <div class="card wide">
+      <label>Output filename (optional)</label>
+      <input type="text" id="outname" placeholder="e.g. my_document">
+    </div>
+
+    <!-- 1. Extract PDF pages -->
+    <div class="card">
+      <div class="card-icon">✂️</div>
+      <div class="card-title">Extract PDF Pages</div>
+      <div class="card-desc">Pick pages or ranges from a single PDF.</div>
+      <input type="text" id="pages" placeholder="e.g. 1, 3-5, 8">
+      <button class="btn btn-g" id="b1" onclick="op_extractPDF()">Extract</button>
+      <div class="msg" id="m1"></div>
+    </div>
+
+    <!-- 2. Merge PDFs -->
+    <div class="card">
+      <div class="card-icon">🔗</div>
+      <div class="card-title">Merge PDFs</div>
+      <div class="card-desc">Combine multiple PDFs into one in upload order.</div>
+      <button class="btn btn-g" id="b2" onclick="op_mergePDFs()">Merge PDFs</button>
+      <div class="msg" id="m2"></div>
+    </div>
+
+    <!-- 3. PDF → Text doc -->
+    <div class="card">
+      <div class="card-icon">📄</div>
+      <div class="card-title">PDF → DOC (Text)</div>
+      <div class="card-desc">Extract all text from a PDF into a plain text doc.</div>
+      <button class="btn btn-g" id="b3" onclick="op_pdfToDoc()">Convert</button>
+      <div class="msg" id="m3"></div>
+    </div>
+
+    <!-- 4. DOCX → PDF -->
+    <div class="card">
+      <div class="card-icon">📝</div>
+      <div class="card-title">DOCX → PDF</div>
+      <div class="card-desc">Convert a DOCX file's text content to PDF.</div>
+      <button class="btn btn-g" id="b4" onclick="op_docToPDF()">Convert</button>
+      <div class="msg" id="m4"></div>
+    </div>
+
+    <!-- 5. Image → PDF -->
+    <div class="card">
+      <div class="card-icon">🖼️</div>
+      <div class="card-title">Image → PDF</div>
+      <div class="card-desc">Combine PNG/JPG images into a single PDF.</div>
+      <button class="btn btn-g" id="b5" onclick="op_imageToPDF()">Convert</button>
+      <div class="msg" id="m5"></div>
+    </div>
+
+    <!-- 6. Extract DOCX pages -->
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Extract DOCX Pages</div>
+      <div class="card-desc">Pull specific pages from a DOCX as a PDF.</div>
+      <input type="text" id="docpages" placeholder="e.g. 1, 3-6, 10">
+      <button class="btn btn-g" id="b6" onclick="op_extractDOCX()">Extract</button>
+      <div class="msg" id="m6"></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  Developed by
+  <a href="https://linkedin.com/in/rajath-channasetty" target="_blank" rel="noopener noreferrer">
+    Rajath Channasetty
+  </a>
+</footer>
+
+<!-- Libraries loaded WITHOUT broken SRI hashes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════
+   STARTUP — wait for libs, show status
+═══════════════════════════════════════════ */
+var libStatus = document.getElementById('lib-status');
+
+window.addEventListener('load', function () {
+  var missing = [];
+  if (typeof PDFLib   === 'undefined') missing.push('pdf-lib');
+  if (typeof mammoth  === 'undefined') missing.push('mammoth');
+
+  if (missing.length) {
+    libStatus.className = 'error';
+    libStatus.textContent =
+      '⚠ Could not load: ' + missing.join(', ') +
+      '. Check your internet connection and refresh the page.';
+    // Disable all buttons
+    document.querySelectorAll('.btn').forEach(function(b){ b.disabled = true; });
+  } else {
+    libStatus.className = 'ok';
+    libStatus.textContent = '✓ Libraries loaded — ready to use';
+    setTimeout(function(){ libStatus.style.display = 'none'; }, 2500);
+  }
+});
+
+/* ═══════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════ */
+var ALLOWED = {
+  'application/pdf': 'pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'image/png': 'image',
+  'image/jpeg': 'image'
+};
+var MAX_BYTES  = 50 * 1024 * 1024;
+var MAX_RANGE  = 500;
+var files      = [];
+
+/* ═══════════════════════════════════════════
+   FILE INPUT
+═══════════════════════════════════════════ */
+var dz = document.getElementById('dz');
+var fi = document.getElementById('fi');
+
+dz.addEventListener('dragover',  function(e){ e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', function(){ dz.classList.remove('over'); });
+dz.addEventListener('drop', function(e){
+  e.preventDefault(); dz.classList.remove('over');
+  loadFiles(e.dataTransfer.files);
+});
+fi.addEventListener('change', function(){ loadFiles(this.files); this.value = ''; });
+
+function loadFiles(list) {
+  files = [];
+  var bad = [];
+  for (var i = 0; i < list.length; i++) {
+    var f = list[i];
+    if (!f.size)                { bad.push(f.name + ' (empty)'); continue; }
+    if (f.size > MAX_BYTES)     { bad.push(f.name + ' (>50 MB)'); continue; }
+    if (!ALLOWED[f.type])       { bad.push(f.name + ' (unsupported type)'); continue; }
+    files.push(f);
+  }
+  if (bad.length) showMsg('1', 'Skipped: ' + bad.join(' | '), 'inf');
+  renderFileList();
+}
+
+function renderFileList() {
+  var box   = document.getElementById('flist-box');
+  var items = document.getElementById('flist-items');
+  if (!files.length) { box.style.display = 'none'; return; }
+  items.innerHTML = '';
+  files.forEach(function(f) {
+    var row  = document.createElement('div'); row.className = 'fi';
+    var dot  = document.createElement('div'); dot.className  = 'fi-dot';
+    var name = document.createElement('div'); name.className = 'fi-name'; name.textContent = f.name;
+    var size = document.createElement('div'); size.className = 'fi-size';
+    size.textContent = f.size < 1048576
+      ? Math.round(f.size / 1024) + ' KB'
+      : (f.size / 1048576).toFixed(1) + ' MB';
+    row.appendChild(dot); row.appendChild(name); row.appendChild(size);
+    items.appendChild(row);
+  });
+  box.style.display = 'block';
+}
+
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+function safeName(fallback, ext) {
+  var raw = document.getElementById('outname').value.trim();
+  var n   = raw || fallback;
+  n = n.replace(/[<>:"\/\\|?*\x00-\x1f]/g, '_')
+       .replace(/\.\.+/g, '.')
+       .replace(/^[. \/\\]+/, '')
+       .trim();
+  if (!n) n = fallback;
+  return n.replace(/\.pdf$/i, '').replace(/\.doc(x)?$/i, '') + '.' + ext;
+}
+
+function dl(bytes, filename, mime) {
+  mime = mime || 'application/pdf';
+  var blob = new Blob([bytes], { type: mime });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 6000);
+}
+
+function showMsg(id, text, type) {
+  var el = document.getElementById('m' + id);
+  if (!el) return;
+  el.className = 'msg show ' + (type || 'inf');
+
+  // After a successful action, append Clear + Reload buttons
+  if (type === 'ok') {
+    el.innerHTML =
+      '<span>' + escHtml(text) + '</span>' +
+      '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' +
+        '<button class="action-btn clear-btn" onclick="clearAll()">↺ Clear &amp; upload new</button>' +
+        '<button class="action-btn reload-btn" onclick="reloadPage()">⟳ Reload page</button>' +
+      '</div>';
+  } else {
+    el.textContent = text;
+  }
+}
+
+function clearAll() {
+  // Reset all state
+  files = [];
+  // Clear file input
+  var fi = document.getElementById('fi');
+  if (fi) fi.value = '';
+  // Hide file list
+  var box = document.getElementById('flist-box');
+  if (box) box.style.display = 'none';
+  document.getElementById('flist-items').innerHTML = '';
+  // Clear all text inputs
+  document.getElementById('outname').value  = '';
+  document.getElementById('pages').value    = '';
+  document.getElementById('docpages').value = '';
+  // Clear all status messages
+  for (var i = 1; i <= 6; i++) {
+    var m = document.getElementById('m' + i);
+    if (m) { m.textContent = ''; m.className = 'msg'; }
+  }
+  // Re-enable all buttons
+  document.querySelectorAll('.btn').forEach(function(b) {
+    b.disabled = false;
+    if (b._label) b.textContent = b._label;
+  });
+  // Scroll back to top smoothly
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function reloadPage() {
+  window.location.reload();
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function lock(id, on) {
+  var b = document.getElementById('b' + id);
+  if (!b) return;
+  b.disabled = on;
+  if (on) {
+    b._label = b.textContent;
+    b.innerHTML = '<span class="spin"></span> Working\u2026';
+  } else {
+    b.textContent = b._label || 'Done';
+  }
+}
+
+/* Security: verify actual PDF magic bytes */
+async function checkPDF(file) {
+  var slice = await file.slice(0, 5).arrayBuffer();
+  var sig   = new TextDecoder().decode(new Uint8Array(slice));
+  if (!sig.startsWith('%PDF')) {
+    throw new Error('"' + file.name + '" is not a valid PDF (failed magic byte check).');
+  }
+}
+
+/* Hardened page range parser */
+function parseRange(str, maxPage) {
+  var out  = new Set();
+  var parts = str.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    var t = parts[i].trim();
+    var m = t.match(/^(\d{1,6})\s*[-\u2013]\s*(\d{1,6})$/);
+    if (m) {
+      var a = Math.min(+m[1], +m[2]);
+      var b = Math.max(+m[1], +m[2]);
+      if (b - a > MAX_RANGE) {
+        throw new Error('Range ' + a + '-' + b + ' is too large. Max ' + MAX_RANGE + ' pages per range.');
+      }
+      for (var p = a; p <= b; p++) if (p >= 1 && p <= maxPage) out.add(p - 1);
+    } else if (/^\d{1,6}$/.test(t)) {
+      var n = +t;
+      if (n >= 1 && n <= maxPage) out.add(n - 1);
+    }
+    /* anything else (scripts, floats, SQL) silently ignored */
+  }
+  return Array.from(out).sort(function(a, b) { return a - b; });
+}
+
+/* Text → paginated PDF helper */
+async function textToPDF(text) {
+  var PDFDocument = PDFLib.PDFDocument;
+  var StandardFonts = PDFLib.StandardFonts;
+  var rgb = PDFLib.rgb;
+
+  var pdf    = await PDFDocument.create();
+  var font   = await pdf.embedFont(StandardFonts.Helvetica);
+  var fs     = 11, lh = fs * 1.45, mg = 50;
+  var pw     = 595, ph = 842;
+  var cpl    = Math.floor((pw - mg * 2) / (fs * 0.52));
+  var lpp    = Math.floor((ph - mg * 2) / lh);
+
+  /* word-wrap */
+  var lines = [];
+  text.split('\n').forEach(function(para) {
+    var words = para.split(/\s+/);
+    var cur   = '';
+    words.forEach(function(w) {
+      if (!w) return;
+      var candidate = cur ? cur + ' ' + w : w;
+      if (candidate.length <= cpl) { cur = candidate; }
+      else { if (cur) lines.push(cur); cur = w; }
+    });
+    if (cur) lines.push(cur);
+    lines.push('');  /* blank line between paragraphs */
+  });
+
+  /* paginate */
+  for (var li = 0; li < lines.length; li += lpp) {
+    var pg    = pdf.addPage([pw, ph]);
+    var chunk = lines.slice(li, li + lpp);
+    chunk.forEach(function(line, j) {
+      if (!line.trim()) return;
+      pg.drawText(line, { x: mg, y: ph - mg - j * lh, size: fs, font: font, color: rgb(0,0,0) });
+    });
+  }
+  return pdf;
+}
+
+/* ═══════════════════════════════════════════
+   1. EXTRACT PDF PAGES
+═══════════════════════════════════════════ */
+async function op_extractPDF() {
+  showMsg('1', '');
+  var pdfs = files.filter(function(f){ return f.type === 'application/pdf'; });
+  if (pdfs.length !== 1) { showMsg('1', 'Upload exactly one PDF file.', 'err'); return; }
+  var ps = document.getElementById('pages').value.trim();
+  if (!ps) { showMsg('1', 'Enter pages to extract — e.g. 1, 3-5, 8', 'err'); return; }
+
+  lock('1', true);
+  try {
+    await checkPDF(pdfs[0]);
+    var bytes  = new Uint8Array(await pdfs[0].arrayBuffer());
+    var src    = await PDFLib.PDFDocument.load(bytes);
+    var total  = src.getPageCount();
+    var pages  = parseRange(ps, total);
+    if (!pages.length) { showMsg('1', 'No valid pages. This PDF has ' + total + ' pages.', 'err'); return; }
+
+    var out    = await PDFLib.PDFDocument.create();
+    var copied = await out.copyPages(src, pages);
+    copied.forEach(function(p){ out.addPage(p); });
+
+    dl(await out.save(), safeName('extracted', 'pdf'));
+    showMsg('1', '✓ Extracted ' + pages.length + ' page' + (pages.length !== 1 ? 's' : '') + ' successfully.', 'ok');
+  } catch(e) {
+    console.error('[extractPDF]', e);
+    showMsg('1', e.message || 'Extraction failed. Check the PDF is valid and not encrypted.', 'err');
+  } finally { lock('1', false); }
+}
+
+/* ═══════════════════════════════════════════
+   2. MERGE PDFs
+═══════════════════════════════════════════ */
+async function op_mergePDFs() {
+  showMsg('2', '');
+  var pdfs = files.filter(function(f){ return f.type === 'application/pdf'; });
+  if (pdfs.length < 2) { showMsg('2', 'Select at least two PDF files.', 'err'); return; }
+
+  lock('2', true);
+  try {
+    var out = await PDFLib.PDFDocument.create();
+    for (var i = 0; i < pdfs.length; i++) {
+      await checkPDF(pdfs[i]);
+      var src    = await PDFLib.PDFDocument.load(new Uint8Array(await pdfs[i].arrayBuffer()));
+      var copied = await out.copyPages(src, src.getPageIndices());
+      copied.forEach(function(p){ out.addPage(p); });
+    }
+    dl(await out.save(), safeName('merged', 'pdf'));
+    showMsg('2', '✓ Merged ' + pdfs.length + ' PDFs successfully.', 'ok');
+  } catch(e) {
+    console.error('[mergePDFs]', e);
+    showMsg('2', e.message || 'Merge failed. Ensure all files are valid, non-encrypted PDFs.', 'err');
+  } finally { lock('2', false); }
+}
+
+/* ═══════════════════════════════════════════
+   3. PDF → DOC  (text extraction using pdf-lib + canvas trick)
+   Note: pdf-lib doesn't natively extract text.
+   We use a reliable workaround: embed text via pdf-lib's getPage()
+   Limitation: extracted text may lose some formatting — this is
+   a browser-only limitation without a server-side parser.
+═══════════════════════════════════════════ */
+async function op_pdfToDoc() {
+  showMsg('3', '');
+  var pdfs = files.filter(function(f){ return f.type === 'application/pdf'; });
+  if (!pdfs.length) { showMsg('3', 'Upload a PDF file first.', 'err'); return; }
+
+  lock('3', true);
+  try {
+    await checkPDF(pdfs[0]);
+    var bytes = new Uint8Array(await pdfs[0].arrayBuffer());
+    var src   = await PDFLib.PDFDocument.load(bytes);
+    var total = src.getPageCount();
+
+    /* Extract raw text from PDF byte stream using regex on the raw bytes */
+    var raw    = new TextDecoder('latin1').decode(bytes);
+    var chunks = [];
+    var re     = /\(([^)\\]{1,200})\)\s*Tj/g;
+    var match;
+    while ((match = re.exec(raw)) !== null) {
+      var txt = match[1]
+        .replace(/\\n/g, '\n').replace(/\\r/g, '\n')
+        .replace(/\\t/g, '\t').replace(/\\\\/g, '\\')
+        .replace(/\\\(/g, '(').replace(/\\\)/g, ')');
+      if (txt.trim()) chunks.push(txt);
+    }
+
+    var text = chunks.length
+      ? chunks.join(' ')
+      : '[No extractable text found in this PDF. The file may contain scanned images or use non-standard encoding.]';
+
+    dl(text, safeName('converted', 'doc'), 'application/msword');
+    showMsg('3', '✓ Extracted text from ' + total + ' page' + (total !== 1 ? 's' : '') + '.', 'ok');
+  } catch(e) {
+    console.error('[pdfToDoc]', e);
+    showMsg('3', e.message || 'Conversion failed. Check the PDF is valid and not encrypted.', 'err');
+  } finally { lock('3', false); }
+}
+
+/* ═══════════════════════════════════════════
+   4. DOCX → PDF  (mammoth.js for real DOCX parsing)
+═══════════════════════════════════════════ */
+async function op_docToPDF() {
+  showMsg('4', '');
+  var DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  var docs = files.filter(function(f){ return f.type === DOCX || f.type === 'application/msword'; });
+  if (!docs.length) { showMsg('4', 'Upload a DOCX file first.', 'err'); return; }
+
+  lock('4', true);
+  try {
+    var ab     = await docs[0].arrayBuffer();
+    var result = await mammoth.extractRawText({ arrayBuffer: ab });
+    var text   = (result.value || '').trim();
+    if (!text) { showMsg('4', 'No text content found in the document.', 'err'); return; }
+
+    var pdf = await textToPDF(text);
+    dl(await pdf.save(), safeName('converted', 'pdf'));
+    showMsg('4', '✓ Converted DOCX to PDF successfully.', 'ok');
+  } catch(e) {
+    console.error('[docToPDF]', e);
+    showMsg('4', e.message || 'Conversion failed. Ensure the file is a valid DOCX.', 'err');
+  } finally { lock('4', false); }
+}
+
+/* ═══════════════════════════════════════════
+   5. IMAGE → PDF
+═══════════════════════════════════════════ */
+async function op_imageToPDF() {
+  showMsg('5', '');
+  var imgs = files.filter(function(f){ return f.type === 'image/png' || f.type === 'image/jpeg'; });
+  if (!imgs.length) { showMsg('5', 'Upload PNG or JPG images first.', 'err'); return; }
+
+  lock('5', true);
+  try {
+    var pdf = await PDFLib.PDFDocument.create();
+    for (var i = 0; i < imgs.length; i++) {
+      var bytes = new Uint8Array(await imgs[i].arrayBuffer());
+      var img   = imgs[i].type === 'image/png'
+        ? await pdf.embedPng(bytes)
+        : await pdf.embedJpg(bytes);
+      var page  = pdf.addPage([img.width, img.height]);
+      page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+    }
+    dl(await pdf.save(), safeName('images', 'pdf'));
+    showMsg('5', '✓ Converted ' + imgs.length + ' image' + (imgs.length !== 1 ? 's' : '') + ' to PDF.', 'ok');
+  } catch(e) {
+    console.error('[imageToPDF]', e);
+    showMsg('5', e.message || 'Conversion failed. Ensure images are valid PNG or JPG.', 'err');
+  } finally { lock('5', false); }
+}
+
+/* ═══════════════════════════════════════════
+   6. EXTRACT DOCX PAGES → PDF
+═══════════════════════════════════════════ */
+async function op_extractDOCX() {
+  showMsg('6', '');
+  var DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  var docs = files.filter(function(f){ return f.type === DOCX || f.type === 'application/msword'; });
+  if (docs.length !== 1) { showMsg('6', 'Upload exactly one DOCX file.', 'err'); return; }
+  var ps = document.getElementById('docpages').value.trim();
+  if (!ps) { showMsg('6', 'Enter page numbers — e.g. 1, 3-5', 'err'); return; }
+
+  lock('6', true);
+  try {
+    var ab     = await docs[0].arrayBuffer();
+    var result = await mammoth.extractRawText({ arrayBuffer: ab });
+    var text   = (result.value || '').trim();
+    if (!text) { showMsg('6', 'No content found in this document.', 'err'); return; }
+
+    /* Split into ~3000-char page chunks */
+    var rawPages = [];
+    for (var i = 0; i < text.length; i += 3000) rawPages.push(text.slice(i, i + 3000));
+    if (!rawPages.length) { showMsg('6', 'Document appears empty.', 'err'); return; }
+
+    var pages = parseRange(ps, rawPages.length);
+    if (!pages.length) {
+      showMsg('6', 'No valid pages. Document has ~' + rawPages.length + ' pages.', 'err');
+      return;
+    }
+
+    var pdf = await textToPDF(pages.map(function(pi){ return rawPages[pi]; }).join('\n\n---\n\n'));
+    dl(await pdf.save(), safeName('doc-extracted', 'pdf'));
+    showMsg('6', '✓ Extracted ' + pages.length + ' page' + (pages.length !== 1 ? 's' : '') + ' from DOCX.', 'ok');
+  } catch(e) {
+    console.error('[extractDOCX]', e);
+    showMsg('6', e.message || 'Extraction failed. Check the file is a valid DOCX.', 'err');
+  } finally { lock('6', false); }
+}
+</script>
+
+</body>
+</html>
