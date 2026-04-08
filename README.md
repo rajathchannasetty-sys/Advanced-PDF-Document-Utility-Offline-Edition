@@ -34,14 +34,54 @@
 ---
 
 ## 🚀 How to Use
-
-1. Open the [live site](https://github.com/rajathchannasetty-sys/Advanced-PDF-Document-Utility-Offline-Edition) in any modern browser
-2. Drag & drop your files or click **Browse**
-3. Choose an operation from the cards
-4. Download your result — done!
-
-**Supported file types:** PDF · DOCX · PNG · JPG (max 50 MB each)
-
+ 
+There are **two ways** to use this tool — pick whichever suits you:
+ 
+---
+ 
+### ▶️ Option A — Use it online (nothing to install)
+ 
+Just click the link and it opens in your browser:
+ 
+**👉 [https://rajathchannasetty-sys.github.io/Advanced-PDF-Document-Utility-Offline-Edition/](https://rajathchannasetty-sys.github.io/Advanced-PDF-Document-Utility-Offline-Edition/)**
+ 
+Works in Chrome, Edge, Firefox, and Safari. No login, no sign-up.
+ 
+---
+ 
+### 💾 Option B — Download and open the file directly
+ 
+You can download a single `.html` file and use it forever — even without internet.
+ 
+**Step 1** — Download the file
+ 
+Click here → [index.html](index.html) → then click the **⬇ Download raw file** button (top right of the file view on GitHub)
+ 
+**Step 2** — Open it in your browser
+ 
+| Your OS | How to open |
+|---|---|
+| **Windows** | Right-click `index.html` → **Open with** → **Chrome** or **Edge** |
+| **Mac** | Double-click `index.html` — it opens in your default browser |
+| **Linux** | Right-click → **Open with** → choose your browser |
+ 
+Or drag the file directly into an open browser window.
+ 
+> ✅ That's it. No install, no setup, no internet required after the first open.
+> The file works completely offline — your documents never leave your computer.
+ 
+---
+ 
+### 📋 Using the tool (same for both options)
+ 
+1. **Drop your file** — drag and drop onto the upload area, or click **Browse**
+2. **Pick what to do** — choose from the 6 operation cards
+3. **Fill in any options** — page numbers, output filename (optional)
+4. **Click the action button** — the result downloads automatically
+5. **Done or start again** — use the **↺ Clear** or **⟳ Reload** buttons to reset
+ 
+**Supported file types:** PDF · DOCX · PNG · JPG &nbsp;|&nbsp; **Max size:** 50 MB per file
+ 
 ---
 
 ## 🛠️ Tech Stack
