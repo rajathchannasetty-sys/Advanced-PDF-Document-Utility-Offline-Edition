@@ -1,4 +1,4 @@
-# Contributing to PDF Toolkit
+# Contributing to Advanced-PDF-Document-Utility-Offline-Edition
 
 Thank you for your interest in contributing! This is a simple single-file project — contributions of all sizes are welcome.
 
@@ -8,7 +8,7 @@ Thank you for your interest in contributing! This is a simple single-file projec
 
 ```bash
 # 1. Fork the repo on GitHub, then clone your fork
-git clone https://github.com/YOUR-USERNAME/pdf-toolkit.git
+git clone https://github.com/rajathchannasetty-sys/Advanced-PDF-Document-Utility-Offline-Edition.git
 cd pdf-toolkit
 
 # 2. Open the app locally
